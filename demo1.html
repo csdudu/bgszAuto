@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>用js方法，让前景点与面，贴合background-size背景图</title>
+    <link href="reset.css" rel="stylesheet" type="text/css">
+    <style>
+        .ctrl{position: absolute; padding: 20px; background-color: rgba(0,0,0,.3); z-index: 2; line-height: 160%;}
+        button{padding: 5px;}
+        .cont{background: url(images/c1.jpg)  center center no-repeat #eee;  width: 300px; height: 240px; -webkit-background-size: cover; background-size: cover;border: 4px #f00 solid; margin: 0; position: absolute; left:50%; top:30%; -webkit-transform: translate(-50%, -50%); -ms-transform: translate(-50%, -50%);
+        -o-transform: translate(-50%, -50%);
+        transform: translate(-50%, -50%);}
+        .cont2{background: url(images/c2.jpg)  center center no-repeat #eee;  width: 300px; height: 240px; -webkit-background-size: cover; background-size: cover;border: 4px #f00 solid; margin: 0; position: absolute; left:50%; top:80%; -webkit-transform: translate(-50%, -50%); -ms-transform: translate(-50%, -50%);
+        -o-transform: translate(-50%, -50%);
+        transform: translate(-50%, -50%);}
+        .rect{width: 13px; height: 13px; background-color: #ff2;}
+        .item{position: absolute;left:0; top:0;}
+        .bg{position: absolute;left:0; top:0; opacity: .4;}
+    </style>
+    <script src="js/jquery.min.js"></script>
+    
+
+</head>
+
+<body id="market">
+<div class="ctrl">
+    两个同样尺寸的容器，两张不同比例的图片，模特身上几个取样点的尺寸和位置是同步变化的。<br>
+    这个模型可以用来解决，“全屏背景图+前景点”的变化问题。<br>
+
+    <button id="btn1">容器宽度减少-</button>
+    <button id="btn2">容器宽度增加+</button>
+    <button id="btn3">容器高度减少-</button>
+    <button id="btn4">容器高度增加+</button>
+</div>
+<div class="cont" data-bg_width="658" data-bg_height="989">
+    <img src="images/c1.jpg" class="item bg" data-width="658" data-height="989" data-x="0" data-y="0">
+    <img src="images/mask.png" data-width="173" data-height="122" data-x="130" data-y="634" class="item">
+    <div class="item rect" data-width="13" data-height="13" data-x="364" data-y="245" ></div>
+    <div class="item rect" data-width="13" data-height="13" data-x="387" data-y="176" ></div>
+    <div class="item rect" data-width="10" data-height="10" data-x="89" data-y="392" ></div>
+</div> 
+
+<div class="cont2" data-bg_width="658" data-bg_height="481">
+    <img src="images/c2.jpg" class="item bg" data-width="658" data-height="481" data-x="0" data-y="0">
+    <div class="item rect" data-width="13" data-height="13" data-x="368" data-y="176" ></div>
+    <div class="item rect" data-width="10" data-height="10" data-x="363" data-y="402" ></div>
+</div>    
+
+
+</body>
+
+</html>
+<script>
+jQuery(document).ready(function($) {
+    ww = 200;
+    hh = 200;
+    $('.cont').css({
+        width: ww,
+        height: hh
+    });
+
+    $('.cont2').css({
+        width: ww,
+        height: hh
+    });
+
+    init_posi( $('.cont') , $('.cont .item') );
+    init_posi( $('.cont2') , $('.cont2 .item') );
+
+    $('#btn1').click(function(event) {
+        ww-=20;
+        $('.cont').css('width', ww); 
+        $('.cont2').css('width', ww); 
+        init_posi( $('.cont') , $('.cont .item') );
+        init_posi( $('.cont2') , $('.cont2 .item') );
+    });
+
+    $('#btn2').click(function(event) {
+        ww+=20;
+        $('.cont').css('width', ww); 
+        $('.cont2').css('width', ww); 
+        init_posi( $('.cont') , $('.cont .item') );
+        init_posi( $('.cont2') , $('.cont2 .item') );
+    });
+
+    $('#btn3').click(function(event) {
+        hh-=20;
+        $('.cont').css('height', hh); 
+        $('.cont2').css('height', hh); 
+        init_posi( $('.cont') , $('.cont .item') );
+        init_posi( $('.cont2') , $('.cont2 .item') );
+    });
+
+    $('#btn4').click(function(event) {
+        hh+=20;
+        $('.cont').css('height', hh); 
+        $('.cont2').css('height', hh); 
+        init_posi( $('.cont') , $('.cont .item') );
+        init_posi( $('.cont2') , $('.cont2 .item') );
+    });
+    
+});
+
+
+// 处理
+function init_posi(cont,items) {
+    var change = init_scale_offset( $(cont).data("bg_width"),$(cont).data("bg_height"), cont  );
+    $.each( items , function(index, item) {
+         $(item).css({
+             width: $(item).data("width")*change.scale,
+             height: $(item).data("height")*change.scale,
+             left: $(item).data("x")*change.scale-change.x,
+             top: $(item).data("y")*change.scale+change.y
+         });
+    });
+}
+
+// 输出图片变化的比例与偏移量,三个参数分别为:图片原始宽、高、容器对象,输入的图片是“适合容器的图片”的比例及偏移量
+function init_scale_offset(imgW,imgH,cont) {
+    var whRatio = imgW / imgH;
+    var contWhRatio = cont.innerWidth() / cont.innerHeight();
+    if(whRatio<contWhRatio){
+        _scale = cont.innerWidth() / imgW;
+        _offset_x = 0;
+        _offset_y =  ( cont.innerHeight() - cont.innerWidth()/whRatio )/2 ;
+        return {scale:_scale,x:_offset_x,y:_offset_y}
+    }else{
+        _scale = cont.innerHeight() / imgH;
+        _offset_y = 0;
+        _offset_x =  -( cont.innerWidth() - cont.innerHeight()*whRatio )/2 ;
+        return {scale:_scale,x:_offset_x,y:_offset_y}
+    }
+}
+</script>
